@@ -41,9 +41,9 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class FirebaseEnum extends BaseEnum
 {
-    public const API_URL                           = 'https://fcm.googleapis.com/fcm/send';
-    public const SERVER_KEY                        = 'AAAAEUs6MMY:APA91bHzK-16glENxAPBEOgK5vMD27VnQWZbz3j1wTgO-Q88j0v8nsMg0LC0A-HP4OJiYZWpDU9K0mjLxjluieOyWO0D7SCoM-eiwP7Ur3osUkk63ZaaNyJXXS_17BdJ4tcqDRGP8U3y';
-    public const SENDER_ID                         = 'AAAAEUs6MMY:APA91bHzK-16glENxAPBEOgK5vMD27VnQWZbz3j1wTgO-Q88j0v8nsMg0LC0A-HP4OJiYZWpDU9K0mjLxjluieOyWO0D7SCoM-eiwP7Ur3osUkk63ZaaNyJXXS_17BdJ4tcqDRGP8U3y';
-    public const TOPIC_ADD_SUBSCRIPTION_API_URL    = 'https://iid.googleapis.com/iid/v1:batchAdd';
-    public const TOPIC_REMOVE_SUBSCRIPTION_API_URL = 'https://iid.googleapis.com/iid/v1:batchRemove';
+    public const API_URL                           = '';
+    public const SERVER_KEY                        = '';
+    public const SENDER_ID                         = '';
+    public const TOPIC_ADD_SUBSCRIPTION_API_URL    = '';
+    public const TOPIC_REMOVE_SUBSCRIPTION_API_URL = '';
 }
