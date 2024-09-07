@@ -1,0 +1,70 @@
+{
+	"name": "opendesa/opensid",
+	"description": "OpenSID adalah Sistem Informasi Desa (SID) yang sengaja dirancang supaya terbuka dan dapat dikembangkan bersama-sama oleh komunitas peduli SID. OpenSID awalnya dikembangkan menggunakan SID dari Combine Resource Institution (CRI). SID CRI terakhir yang telah digabung dengan OpenSID adalah SID 3.10 yang diperoleh dari teman-teman di https://www.facebook.com/groups/komunitasopendesa pada tanggal 15 Pebruari 2017.",
+	"license": "GPL-3.0-or-later",
+	"type": "project",
+	"keywords": [
+		"opensid",
+		"sistem-informasi-desa"
+	],
+	"require": {
+		"php": "^7.4 || ^8.0 || ^8.1",
+		"codeigniter/framework": "^3.1",
+		"cviebrock/eloquent-sluggable": "^8.0",
+		"illuminate/cache": "^8.83",
+		"illuminate/collections": "^8.83",
+		"illuminate/config": "^8.83",
+		"illuminate/console": "^8.83",
+		"illuminate/database": "^8.78",
+		"illuminate/encryption": "^8.83",
+		"illuminate/events": "^8.83",
+		"illuminate/filesystem": "^8.83",
+		"illuminate/hashing": "^8.83",
+		"illuminate/http": "^8.83",
+		"illuminate/macroable": "^8.83",
+		"illuminate/pagination": "^8.83",
+		"illuminate/queue": "^8.83",
+		"illuminate/support": "^8.83",
+		"illuminate/view": "^8.79",
+		"league/flysystem": "^1.1",
+		"opensid/router": "dev-master",
+		"openspout/openspout": "^3.7",
+		"spatie/eloquent-sortable": "^3.11",
+		"symfony/process": "^5.4",
+		"symfony/var-dumper": "^5.4"
+	},
+	"require-dev": {
+		"mikey179/vfsstream": "1.1.*"		
+	},
+	"minimum-stability": "dev",
+	"prefer-stable": true,
+	"autoload": {
+		"psr-4": {
+			"App\\": "app/",
+			"Modules\\": "Modules/"
+		}
+	},
+	"config": {
+		"sort-packages": true
+	},
+	"extra": {
+		"google/apiclient-services": [
+			"Script",
+			"Drive"
+		]
+	},
+	"scripts": {
+		"pre-autoload-dump": "Google\\Task\\Composer::cleanup",
+		"post-update-cmd": [
+
+		],
+		"post-install-cmd": [
+
+		],
+		"style-fix": [
+			"php-cs-fixer fix --allow-risky=yes",
+			"rector process --dry-run",
+			"npm run prettier-blade"
+		]
+	}
+}
