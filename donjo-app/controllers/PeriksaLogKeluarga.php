@@ -78,8 +78,7 @@ class PeriksaLogKeluarga extends CI_Controller
     {
         parent::__construct();
 
-        $this->load->database();
-        $this->cek_user();
+        $this->load->database();        
     }
 
     public function index()
@@ -109,12 +108,5 @@ class PeriksaLogKeluarga extends CI_Controller
             ->set_output(json_encode([
                 'status' => $status,
             ], JSON_THROW_ON_ERROR));
-    }
-
-    private function cek_user(): void
-    {
-        if ($this->session->periksa_data != 1) {
-            redirect('periksa/login');
-        }
-    }
+    }    
 }

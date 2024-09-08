@@ -48,6 +48,8 @@ vendor/mikey179/*
 !.cache-rector/.gitkeep
 
 storage/framework
+!storage/framework/cache
+!storage/framework/views
 storage/logs
 
 php.ini

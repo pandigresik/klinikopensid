@@ -43,8 +43,7 @@ class PeriksaKlasifikasiSurat extends CI_Controller
     {
         parent::__construct();
 
-        $this->load->database();
-        $this->cek_user();
+        $this->load->database();        
     }
 
     public function hapus()
@@ -57,12 +56,5 @@ class PeriksaKlasifikasiSurat extends CI_Controller
             ->set_output(json_encode([
                 'status' => 1,
             ]));
-    }
-
-    private function cek_user(): void
-    {
-        if ($this->session->periksa_data != 1) {
-            redirect('periksa/login');
-        }
-    }
+    }    
 }

@@ -541,8 +541,7 @@
                                                 }}</td>
                                             <td><button type="button" class="btn btn-sm btn-danger"
                                                     data-title="Data Catatan Peristiwa Penduduk {{ $penduduk['nama'] }} / {{ $penduduk['nik'] }}"
-                                                    data-url='periksaLogPenduduk' data-ref='{!! json_encode(['
-                                                    penduduk'=> $penduduk]) !!}'
+                                                    data-url='periksaLogPenduduk' data-ref='{!! json_encode(['penduduk'=> $penduduk]) !!}'
                                                     data-toggle="modal"
                                                     data-target="#modal-kosong"
                                                     data-close-btn-center=1

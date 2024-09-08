@@ -46,8 +46,7 @@ class PeriksaLogPenduduk extends CI_Controller
     {
         parent::__construct();
 
-        $this->load->database();
-        $this->cek_user();
+        $this->load->database();        
     }
 
     public function index()
@@ -55,7 +54,7 @@ class PeriksaLogPenduduk extends CI_Controller
         $penduduk = $this->input->get('penduduk');
 
         // $logs = LogPenduduk::where('id_pend', $penduduk['id'])->get();
-        $logs          = $this->db->where('id_pend', $penduduk['id'])->get('log_penduduk')->result_array();
+        $logs          = $this->db->where('id_pend', $penduduk['id'])->get('log_penduduk')->result_array();        
         $nik           = $penduduk['nik'];
         $nama          = $penduduk['nama'];
         $statusDasar   = $penduduk['status_dasar'];
@@ -102,12 +101,5 @@ class PeriksaLogPenduduk extends CI_Controller
             ->set_output(json_encode([
                 'status' => $status,
             ], JSON_THROW_ON_ERROR));
-    }
-
-    private function cek_user(): void
-    {
-        if ($this->session->periksa_data != 1) {
-            redirect('periksa/login');
-        }
-    }
+    }    
 }
