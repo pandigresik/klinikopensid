@@ -41,7 +41,7 @@ Route::get('/', 'Periksa@index');
 // Definisi Rute Default
 Route::group('periksa', static function (): void {
     Route::get('/', 'Periksa@index')->name('periksa.index');
-    Route::post('/perbaiki', 'Periksa@perbaiki')->name('periksa.perbaiki');
+    Route::match(['GET', 'POST'], '/perbaiki', 'Periksa@perbaiki')->name('periksa.perbaiki');
     Route::match(['GET', 'POST'], '/perbaiki_sebagian/{masalah?}', 'Periksa@perbaiki_sebagian')->name('periksa.perbaiki_sebagian');    
 });
 Route::group('periksaKlasifikasiSurat', static function (): void {
