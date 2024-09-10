@@ -4,6 +4,10 @@
 
 Klinik OpenSID (https://github.com/pandigresik/klinikopensid) adalah aplikasi yang membantu rekan-rekan pengguna OpenSID versi umum yang mengalami kendala migrasi ke versi terbaru.
 
+**Syarat** 
+
+Support versi OpenSID mulai 2401.0.0
+
 **Penggunaan**
 
 - Download aplikasi
@@ -12,4 +16,3 @@ Klinik OpenSID (https://github.com/pandigresik/klinikopensid) adalah aplikasi ya
 - Lakukan perbaikan jika ditemukan masalah
 - Otomatis aplikasi akan melakukan migrasi ulang, untuk memperbaiki struktur data
 - Buka kembali aplikasi OpenSID
-

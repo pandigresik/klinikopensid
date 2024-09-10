@@ -72,7 +72,7 @@ define('VERSI_DATABASE', '2024090101');
 /**
  * Minimum versi OpenSID yang bisa melakukan migrasi, backup dan restore database ke versi ini
  */
-define('MINIMUM_VERSI', '2307');
+define('MINIMUM_VERSI', '2401');
 
 // Kode laporan statistik
 define('JUMLAH', 666);
