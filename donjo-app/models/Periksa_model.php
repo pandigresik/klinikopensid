@@ -149,7 +149,7 @@ class Periksa_model extends MY_Model
         // Cek jabatan kades
         if (! kades()) {
             $jabatan[] = [
-                'config_id'  => identitas('id'),
+                'config_id'  => identitas('id') ?? 1,
                 'nama'       => 'Kepala ' . ucwords($this->getSetting('sebutan_desa')),
                 'jenis'      => RefJabatan::KADES,
                 'created_by' => $user,
@@ -160,7 +160,7 @@ class Periksa_model extends MY_Model
         // Cek jabatan sekdes
         if (! sekdes()) {
             $jabatan[] = [
-                'config_id'  => identitas('id'),
+                'config_id'  => identitas('id') ?? 1,
                 'nama'       => 'Sekretaris',
                 'jenis'      => RefJabatan::SEKDES,
                 'created_by' => $user,
@@ -173,7 +173,7 @@ class Periksa_model extends MY_Model
 
     public function deteksi_penduduk_tanpa_keluarga()
     {
-        $config_id = identitas('id');
+        $config_id = identitas('id') ?? 1;
 
         return Penduduk::select('id', 'nama', 'nik', 'id_cluster', 'id_kk', 'alamat_sekarang', 'created_at')
             ->kepalaKeluarga()
@@ -185,7 +185,7 @@ class Periksa_model extends MY_Model
     // status dasar penduduk seharusnya mengikuti status terakhir dari log_penduduk
     public function deteksi_log_penduduk_tidak_sinkron()
     {
-        $config_id = identitas('id');
+        $config_id = identitas('id') ?? 1;
 
         $sqlRaw                = "( SELECT MAX(id) max_id, id_pend FROM log_penduduk where config_id = {$config_id} GROUP BY  id_pend)";
         $statusDasarBukanHidup = Penduduk::select('tweb_penduduk.id', 'nama', 'nik', 'status_dasar', 'alamat_sekarang', 'kode_peristiwa', 'tweb_penduduk.created_at')
@@ -212,7 +212,7 @@ class Periksa_model extends MY_Model
 
     public function deteksi_log_penduduk_null()
     {
-        identitas('id');
+        // identitas('id') ?? 1;
 
         return LogPenduduk::select('log_penduduk.id', 'nama', 'nik', 'kode_peristiwa', 'log_penduduk.created_at')
             ->whereNull('kode_peristiwa')
@@ -227,14 +227,14 @@ class Periksa_model extends MY_Model
 
     public function deteksi_log_keluarga_ganda()
     {
-        $config_id = identitas('id');
+        $config_id = identitas('id') ?? 1;
 
         return Keluarga::whereIn('id', static fn($query) => $query->from('log_keluarga')->where(['config_id' => $config_id])->select(['id_kk'])->groupBy(['id_kk', 'tgl_peristiwa'])->having(DB::raw('count(tgl_peristiwa)'), '>', 1))->get();
     }
 
     private function deteksi_klasifikasi_surat_ganda()
     {
-        $config_id = identitas('id');
+        $config_id = identitas('id') ?? 1;
 
         return KlasifikasiSurat::where(['config_id' => $config_id])->whereIn('kode', static fn($q) => $q->from('klasifikasi_surat')->select(['kode'])->where(['config_id' => $config_id])->groupBy('kode')->having(DB::raw('count(kode)'), '>', 1))->orderBy('kode')->get();
     }
@@ -350,7 +350,7 @@ class Periksa_model extends MY_Model
 
     private function perbaiki_penduduk_tanpa_keluarga(): void
     {
-        $config_id     = identitas('id');
+        $config_id     = identitas('id') ?? 1;
         $kode_desa     = identitas('kode_desa');
         $data_penduduk = Penduduk::select('id', 'id_cluster', 'id_kk', 'alamat_sekarang', 'created_at')
             ->kepalaKeluarga()
@@ -396,8 +396,8 @@ class Periksa_model extends MY_Model
 
     private function perbaiki_log_keluarga_bermasalah(): void
     {
-        $configId = identitas('id');
-        $userId   = auth()->id;
+        $configId = identitas('id') ?? 1;
+        $userId   = auth()->id ?? User::first()->id;
         $sql      = "insert into log_keluarga (config_id, id_kk, id_peristiwa, tgl_peristiwa, updated_by)
                 select {$configId} as config_id, id as id_kk, 1 as id_peristiwa, tgl_daftar as tgl_peristiwa, {$userId} as updated_by
                 from tweb_keluarga  where id not in ( select id_kk from log_keluarga where id_peristiwa = 1 ) ";
