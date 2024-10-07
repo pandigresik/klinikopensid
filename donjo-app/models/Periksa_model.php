@@ -274,7 +274,7 @@ class Periksa_model extends MY_Model
         $this->session->db_error = null;
     }
 
-    private function perbaiki_autoincrement()
+    public function perbaiki_autoincrement()
     {
         $hasil = true;
 
@@ -298,9 +298,11 @@ class Periksa_model extends MY_Model
 
         // Daftar tabel yang tidak memiliki Auto_Increment
         $tables = $this->db->query("SELECT `TABLE_NAME` FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = '{$this->db->database}' AND AUTO_INCREMENT IS NULL");
-
+        $this->db->simple_query('SET FOREIGN_KEY_CHECKS=0');
         foreach ($tables->result() as $tbl) {
             $name = $tbl->TABLE_NAME;
+            echo $name.'<br>';
+            continue;
             if (!in_array($name, $exclude_table) && in_array($key = $this->db->list_fields($name)[0], $only_pk)) {
                 $fields = [
                     $key => [
@@ -309,13 +311,14 @@ class Periksa_model extends MY_Model
                         'auto_increment' => true,
                     ],
                 ];
-
-                $this->db->simple_query('SET FOREIGN_KEY_CHECKS=0');
-                if ($hasil = $hasil && $this->dbforge->modify_column($name, $fields)) {
-                    log_message('error', "Auto_Increment pada tabel {$name} dengan kolom {$key} telah ditambahkan.");
-                }
-                $this->db->simple_query('SET FOREIGN_KEY_CHECKS=1');
+                
+                try {
+                    $hasil = $hasil && $this->dbforge->modify_column($name, $fields);
+                } catch (\Exception $e) {
+                    log_message('error', "Auto_Increment pada tabel {$name} dengan kolom {$key} telah ditambahkan.". $e->getMessage());
+                }                            
             }
+            $this->db->simple_query('SET FOREIGN_KEY_CHECKS=1');
         }
 
         return $hasil;
