@@ -464,8 +464,8 @@ class Migrasi_2022020101 extends MY_model
             }
         }
 
-        // Perbaharui view dokumen_hidup
-        $hasil = $hasil && $this->db->query('DROP VIEW dokumen_hidup');
+        // Perbaharui view dokumen_hidups
+        $hasil = $hasil && $this->db->query('DROP VIEW IF EXISTS dokumen_hidup');
 
         return $hasil && $this->db->query('CREATE VIEW dokumen_hidup AS SELECT * FROM dokumen WHERE deleted <> 1');
     }
