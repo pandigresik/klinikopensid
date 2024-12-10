@@ -110,20 +110,20 @@ class MY_Controller extends CI_Controller
         // installer berhasil dijalankan dengan kondisi folder desa sudah ada.
         $this->load->model(['seeders/seeder', 'setting_model', 'anjungan_model']);
 
-        $appKey   = get_app_key();
-        $appKeyDb = Config::first();
+        // $appKey   = get_app_key();
+        // $appKeyDb = Config::first();
 
-        if (Config::count() === 0) {
-            $this->session->cek_app_key = true;
-            redirect('koneksi_database/desaBaru');
-        } elseif (Config::count() > 1) {
-            $appKeyDb = Config::appKey()->first();
-        }
+        // if (Config::count() === 0) {
+        //     $this->session->cek_app_key = true;
+        //     redirect('koneksi_database/desaBaru');
+        // } elseif (Config::count() > 1) {
+        //     $appKeyDb = Config::appKey()->first();
+        // }
 
-        if (!empty($appKeyDb->app_key) && $appKey !== $appKeyDb->app_key) {
-            $this->session->cek_app_key = true;
-            redirect('koneksi_database/config');
-        }
+        // if (!empty($appKeyDb->app_key) && $appKey !== $appKeyDb->app_key) {
+        //     $this->session->cek_app_key = true;
+        //     redirect('koneksi_database/config');
+        // }
 
         $this->setting_model->init();
 

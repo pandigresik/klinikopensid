@@ -36,6 +36,7 @@
  */
 
 use App\Models\Suplemen;
+use Illuminate\Support\Facades\Schema;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -51,10 +52,15 @@ class Suplemen_model extends MY_Model
         if ($sasaran > 0) {
             $this->db->where('s.sasaran', $sasaran);
         }
-
-        $this->config_id('s')
-            ->from('suplemen s')
+        if(Schema::hasColumn('suplemen', 'config_id')){
+            $this->config_id('s')
+                ->from('suplemen s')
+                ->join('suplemen_terdata st', 's.id = st.id_suplemen', 'left');
+        }else {
+            $this->db->from('suplemen s')
             ->join('suplemen_terdata st', 's.id = st.id_suplemen', 'left');
+        }
+        
 
         $this->search_sql();
     }

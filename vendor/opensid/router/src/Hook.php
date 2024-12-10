@@ -102,7 +102,8 @@ class Hook
         if($isAjax || $isWeb) {
             Route::group(
                 '/',
-                ['middleware' => [ new RouteAjaxMiddleware() ]],
+                // ['middleware' => [ new RouteAjaxMiddleware() ]],
+                [],
                 function () use ($modulesLocation) {
                     // Include all routes web.php
                     $mapModules = [];

@@ -223,22 +223,24 @@ class Migrasi_2024020171 extends MY_model
                 $table->foreign('penduduk_id')->references('id')->on('tweb_penduduk')->onUpdate('cascade')->onDelete('cascade');
             });
 
-            $komentarMandiri = Komentar::whereJenis(LAPORAN_MANDIRI)->get();
-            if ($komentarMandiri) {
-                foreach ($komentarMandiri as $key => $item) {
-                    $penduduk = Penduduk::whereNik(trim($item->email))->first();
-                    // masukkan data penduduk yang valid saja, ada kemungkinan nik tidak ditemukan ( case ganti nik )
-                    if ($penduduk) {
-                        $item->penduduk_id = $penduduk->id;
-                        PesanMandiri::create($item->toArray());
+            if(Schema::hasColumn('komentar', 'jenis')){
+                $komentarMandiri = Komentar::whereJenis(LAPORAN_MANDIRI)->get();
+                if ($komentarMandiri) {
+                    foreach ($komentarMandiri as $key => $item) {
+                        $penduduk = Penduduk::whereNik(trim($item->email))->first();
+                        // masukkan data penduduk yang valid saja, ada kemungkinan nik tidak ditemukan ( case ganti nik )
+                        if ($penduduk) {
+                            $item->penduduk_id = $penduduk->id;
+                            PesanMandiri::create($item->toArray());
+                        }
                     }
+                    Komentar::whereJenis(LAPORAN_MANDIRI)->delete();
                 }
-                Komentar::whereJenis(LAPORAN_MANDIRI)->delete();
-            }
 
-            Schema::table('komentar', static function (Blueprint $table) {
-                $table->dropColumn('jenis');
-            });
+                Schema::table('komentar', static function (Blueprint $table) {
+                    $table->dropColumn('jenis');
+                });
+            }
         }
 
         return $hasil;

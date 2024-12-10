@@ -60,22 +60,16 @@ class Periksa extends CI_Controller
     }
 
     public function index()
-    {
-        $this->load->model(['periksa_model']);
+    {        
         if ($this->session->message_query || $this->session->message_exception) {
             log_message('error', $this->session->message_query);
             log_message('error', $this->session->message_exception);
-        }
-        $periksa = $this->periksa_model->periksa;
-        if (! $periksa['masalah']) {
-            $this->load->model('database_model');
-            Migrasi::truncate();
-            $this->database_model->migrasi_db_cri();
+        }        
+        $this->load->model('database_model');
+        Migrasi::truncate();
+        $this->database_model->migrasi_db_cri();
 
-            return view('periksa.migrasi');
-        }
-
-        return view('periksa.index', array_merge($periksa, ['header' => $this->header]));
+        return view('periksa.index', array_merge([], ['header' => $this->header]));
     }
 
     public function perbaiki(): void

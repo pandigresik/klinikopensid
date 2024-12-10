@@ -51,4 +51,6 @@ class GrupAkses extends BaseModel
      * @var string
      */
     protected $table = 'grup_akses';
+
+    public $timestamps = false;
 }

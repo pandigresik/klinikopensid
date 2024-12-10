@@ -38,6 +38,7 @@
 use App\Models\Migrasi;
 use App\Models\SettingAplikasi;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -80,13 +81,13 @@ class Database_model extends MY_Model
         $version = setting('current_version');
         if ($version == null) {
             // versi tidak terdeteksi dari modul periksa.
-            return SettingAplikasi::where('key', 'current_version')->first()->value;
+            return SettingAplikasi::withoutGlobalScope(\App\Scopes\ConfigIdScope::class)->where('key', 'current_version')->first()->value;
         }
 
         return $version;
     }
 
-    public function migrasi_db_cri($install = false): void
+    public function migrasi_db_cri($ulang = false): void
     {
         $this->load->helper('directory');
         // Tunggu restore selesai sebelum migrasi
@@ -97,12 +98,12 @@ class Database_model extends MY_Model
         $migratedDatabase = Migrasi::pluck('versi_database')->toArray();
 
         session_success();
-        $versi        = (int) str_replace('.', '', $this->cekCurrentVersion());
+        $versi        = (int) substr(str_replace('.', '', $this->cekCurrentVersion()),0,4);
         $minimumVersi = (int) str_replace('.', '', $this->minimumVersion);
 
-        if (! $install && $versi < $minimumVersi) {
-            show_error('<h2>Silakan upgrade dulu ke OpenSID dengan minimal versi ' . $this->minimumVersion . '</h2>');
-        }
+        // if (! $install && $versi < $minimumVersi) {
+        //     show_error('<h2>Silakan upgrade dulu ke OpenSID dengan minimal versi ' . $this->minimumVersion . '</h2>');
+        // }
 
         $migrations = directory_map('donjo-app/models/migrations', 1);
         // sort by name
@@ -114,10 +115,15 @@ class Database_model extends MY_Model
                 preg_match('/\d+/', $migrate, $matches);
                 if ($matches) {
                     $migrateName = $matches[0];
+                    // hanya jalankan migrasi yang lebih besar dari versi sekarang dan tidak dipaksa untuk ulang
+                    if((int) substr($migrateName, 2,4) <= $versi  && !$ulang ) continue;
+
                     if (! isset($migratedDatabase[$migrateName])) {
                         $this->jalankan_migrasi('Migrasi_' . $migrateName);
                         $migrasiDb = Migrasi::firstOrCreate(['versi_database' => $migrateName]);
-                        $migrasiDb->update(['premium' => ['Migrasi_' . $migrateName]]);
+                        if (Schema::hasColumn('migrasi', 'premium')) {
+                            $migrasiDb->update(['premium' => ['Migrasi_' . $migrateName]]);    
+                        }                        
 
                         if ($this->getShowProgress()) {
                             // sleep(1.5);
@@ -128,7 +134,9 @@ class Database_model extends MY_Model
             }
             // untuk mencegah kesalahan nama file migrasi, tambahkan record berdasarkan VERSI_DATABASE saat ini
             $migrasiDb = Migrasi::firstOrCreate(['versi_database' => VERSI_DATABASE]);
-            $migrasiDb->update(['premium' => ['Migrasi_' . VERSI_DATABASE]]);
+            if (Schema::hasColumn('migrasi', 'premium')) {
+                $migrasiDb->update(['premium' => ['Migrasi_' . VERSI_DATABASE]]);
+            }            
         } catch (\Exception $e) {
             log_message('error', $e->getMessage());
             if ($this->getShowProgress()) {

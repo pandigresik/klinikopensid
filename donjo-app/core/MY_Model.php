@@ -139,22 +139,35 @@ class MY_Model extends CI_Model
         return $this->db->query($sql)->result_array();
     }
 
+    public function hapus_indeks($tabel, $indeks)
+    {
+        if ($this->cek_indeks($tabel, $indeks)) {
+            return $this->db->query("DROP INDEX {$indeks} ON {$tabel}");
+        }
+
+        return true;
+    }
+
     public function tambahIndeks($tabel, $kolom, $index = 'UNIQUE', $multi = false)
     {
         if ($index == 'UNIQUE') {
+            $kolomStr = $kolom . ' ,count(*) as jumlah';
+
             $duplikat = $this->db
-                ->select("CONCAT({$kolom}) AS jmlh")
+                ->select($kolomStr)
                 ->from($tabel)
-                ->group_by('jmlh')
-                ->having('COUNT(jmlh) > 1')
+                ->group_by($kolom)
+                ->having('jumlah > 1')
                 ->get()
                 ->num_rows();
 
             if ($duplikat > 0) {
                 session_error('--> Silahkan Cek <a href="' . site_url('info_sistem') . '">Info Sistem > Log</a>.');
                 log_message('error', "Data kolom {$kolom} pada tabel {$tabel} ada yang duplikat dan perlu diperbaiki sebelum migrasi dilanjutkan.");
-
-                return false;
+                log_message('notice', 'coba hapus otomatis');
+                if($this->hapusDataKembar($tabel, 'id', array_map(function($item){ return trim($item);} , explode(',',$kolom)))){
+                    log_message('error', "Data kolom {$kolom} pada tabel {$tabel} berhasil diperbaiki");
+                };
             }
         }
 
@@ -206,10 +219,25 @@ class MY_Model extends CI_Model
                     $query = $query->where('config_id', $modul['config_id'] ?? $this->config_id);
                 }
 
-                $id = $query->where('slug', $modul['slug'])->get('setting_modul')->row()->id;
-            }
+                if (Schema::hasColumn('setting_modul', 'config_id')) {
+                    $query = $query->where('config_id', $modul['config_id'] ?? $this->config_id);
+                }
 
-            $grupOperator = UserGrup::getGrupId(UserGrup::OPERATOR);
+                if (Schema::hasColumn('setting_modul', 'slug')) {
+                    $query = $query->where('slug', $modul['slug']);
+                }else{
+                    $query = $query->where('slug', $modul['slug']);
+                }
+
+                $id = $query->get('setting_modul')->row()->id;
+            }
+            if(Schema::hasColumn('user_grup', 'slug')){
+                $grupOperator = UserGrup::getGrupId(UserGrup::OPERATOR) ?? 2;
+            }else {
+                $grupOperator = UserGrup::withoutGlobalScope(App\Scopes\ConfigIdScope::class)->whereNama(UserGrup::OPERATOR)->first()->id ?? 2;
+            }
+            
+                        
             $hasil        = $hasil && $this->grupAkses($grupOperator, $id, 3, $modul['config_id'] ?? null);
         }
 
@@ -283,13 +311,17 @@ class MY_Model extends CI_Model
 
     public function tambah_surat_tinymce($data, $config_id = null)
     {
+        $hasConfigId = Schema::hasColumn('tweb_surat_format', 'config_id');
         $config_id ??= $this->config_id;
         $data['url_surat']    = 'surat-' . url_title($data['nama'], '-', true);
         $data['jenis']        = FormatSurat::TINYMCE_SISTEM;
         $data['syarat_surat'] = json_encode($data['syarat_surat'], JSON_THROW_ON_ERROR);
         $data['created_by']   = auth()->id;
         $data['updated_by']   = auth()->id;
-        $data['config_id']    = $config_id;
+        if($hasConfigId){
+            $data['config_id']    = $config_id;
+        }
+        
         if (is_array($data['form_isian'])) {
             $data['form_isian'] = json_encode($data['form_isian'], JSON_THROW_ON_ERROR);
         }
@@ -298,7 +330,12 @@ class MY_Model extends CI_Model
         }
 
         // Tambah data baru dan update (hanya kolom template) jika ada sudah ada
-        $cek_surat = DB::table('tweb_surat_format')->where('config_id', $config_id)->where('url_surat', $data['url_surat']);
+        if($hasConfigId){
+            $cek_surat = DB::table('tweb_surat_format')->where('config_id', $config_id)->where('url_surat', $data['url_surat']);
+        }else {
+            $cek_surat = DB::table('tweb_surat_format')->where('url_surat', $data['url_surat']);
+        }
+        
 
         if ($cek_surat->exists()) {
             $cek_surat->update(['template' => $data['template']]);
@@ -360,7 +397,7 @@ class MY_Model extends CI_Model
         }
 
         // Update created_by dan updated_by jika kosong
-        $user = User::select('id')->where('id_grup', 1)->first();
+        $user = User::withoutGlobalScope(App\Scopes\ConfigIdScope::class)->select('id')->where('id_grup', 1)->first();
 
         if ($this->db->field_exists('created_by', $table)) {
             DB::table($table)->whereNull('created_by')->update(['created_by' => $user->id]);
@@ -552,5 +589,38 @@ class MY_Model extends CI_Model
         }
 
         return $hasil;
+    }
+
+    public function jalankan_migrasi($migrasi)
+    {        
+        $this->load->model('migrations/' . $migrasi);
+        if ($this->{$migrasi}->up()) {
+            log_message('notice', 'Berhasil Jalankan ' . $migrasi);
+
+            $_SESSION['daftar_migrasi'][] = $migrasi;
+
+            return true;
+        }
+
+        log_message('error', 'Gagal Jalankan ' . $migrasi);
+
+        return false;
+    }
+
+    private function hapusDataKembar($table, $key, $uniqueColomn){
+        $column = [];
+        foreach ($uniqueColomn as $value) {
+            array_push($column, "t1.{$value} = t2.{$value}");
+        }
+        $columnString = implode(' and ', $column);
+        $query = "
+        delete t1
+        FROM {$table} t1
+            INNER JOIN {$table} t2
+        WHERE
+            t1.{$key} > t2.{$key} AND
+            {$columnString}
+        ";
+        return DB::statement($query);
     }
 }

@@ -177,7 +177,8 @@ class Config extends BaseModel
 
     public function scopeAppKey($query)
     {
-        return $query->where('app_key', get_app_key());
+        return $query;
+        // return $query->where('app_key', get_app_key());
     }
 
     /**
