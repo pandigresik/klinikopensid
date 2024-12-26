@@ -47,7 +47,7 @@ class Migrasi_multidb extends MY_model
 {
     public function up()
     {
-        $hasil = true;
+        $hasil = true;        
         $hasil = $hasil && $this->identitas_desa($hasil);
         $hasil = $hasil && $this->wilayah_administratif($hasil);
         $hasil = $hasil && $this->pengaturan_aplikasi($hasil);
@@ -139,8 +139,13 @@ class Migrasi_multidb extends MY_model
         $hasil = $hasil && $this->tte($hasil);
         $hasil = $hasil && $this->dtks($hasil);
         $hasil = $hasil && $this->password_reset($hasil);
-
-        // $hasil = $hasil && $this->jalankan_migrasi('data_awal');
+        
+        $sudahMigrasiModulAwal = DB::table('setting_modul')->where('modul', 'Optimasi Gambar')->count();
+        
+        if (! $sudahMigrasiModulAwal) {
+            $hasil = $hasil && $this->reset_modul($hasil);
+        }
+        $hasil = $hasil && $this->jalankan_migrasi('data_awal');
 
         return $hasil && true;
     }
@@ -386,7 +391,7 @@ class Migrasi_multidb extends MY_model
         $hasil = $hasil && $this->tambah_config_id($table);
 
         // Sesuaikan ulang index id_pend pada tabel log_penduduk
-        $hasil = $hasil && $this->buat_ulang_index($table, 'id_pend', '(`config_id`, `id_pend`, `kode_peristiwa`, `tgl_peristiwa`)');
+        $hasil = $hasil && $this->buat_ulang_index($table, 'log_penduduk_unique_1', '(`config_id`, `id_pend`, `kode_peristiwa`, `tgl_peristiwa`)');
 
         // Tambah kolom config_id pada tabel log_perubahan_penduduk
         $hasil = $hasil && $this->tambah_config_id('log_perubahan_penduduk');
@@ -1147,6 +1152,171 @@ class Migrasi_multidb extends MY_model
             return $q->select('id')->from('tweb_penduduk');
         })->delete();
 
+        return $hasil;
+    }
+
+    public function reset_modul($hasil)
+    {
+        DB::statement("truncate setting_modul");
+        $configId = identitas('id');
+        // gunakan default dari opensid 2312-umum
+        $sql= "INSERT INTO setting_modul
+            (id, config_id, modul, slug, url, aktif, ikon, urut, `level`, hidden, ikon_kecil, parent)
+            VALUES
+            (2, $configId, 'Kependudukan', 'kependudukan', '', 1, 'fa-users', 30, 2, 0, 'fa fa-users', 0)
+            ,(3, $configId, 'Statistik', 'statistik', '', 1, 'fa-line-chart', 40, 2, 0, 'fa fa-line-chart', 0)
+            ,(4, $configId, 'Layanan Surat', 'layanan-surat', '', 1, 'fa-book', 50, 2, 0, 'fa fa-book', 0)
+            ,(5, $configId, 'Analisis', 'analisis', 'analisis_master', 1, 'fa-check-square', 90, 2, 0, 'fa fa-check-square-o', 0)
+            ,(6, $configId, 'Bantuan', 'bantuan', 'program_bantuan/clear', 1, 'fa-heart', 100, 2, 0, 'fa fa-heart', 0)
+            ,(7, $configId, 'Pertanahan', 'pertanahan', '', 1, 'fa-map-signs', 110, 2, 0, 'fa fa-map-signs', 0)
+            ,(8, $configId, 'Pengaturan Peta', 'pengaturan-peta', 'plan', 1, 'fa-location-arrow', 9, 2, 0, 'fa fa-location-arrow', 9)
+            ,(9, $configId, 'Pemetaan', 'pemetaan', '', 1, 'fa-globe', 130, 2, 0, 'fa fa-globe', 0)
+            ,(10, $configId, 'Hubung Warga', 'hubung-warga', '', 1, 'fa-envelope', 140, 2, 0, 'fa fa-envelope', 0)
+            ,(11, $configId, 'Pengaturan', 'pengaturan', '', 1, 'fa-users', 150, 1, 1, 'fa-users', 0)
+            ,(13, $configId, 'Admin Web', 'admin-web', '', 1, 'fa-desktop', 160, 4, 0, 'fa fa-desktop', 0)
+            ,(14, $configId, 'Layanan Mandiri', 'layanan-mandiri', '', 1, 'fa-inbox', 170, 2, 0, 'fa fa-inbox', 0)
+            ,(15, $configId, 'Sekretariat', 'sekretariat', '', 1, 'fa-archive', 60, 2, 0, 'fa fa-archive', 0)
+            ,(17, $configId, 'Identitas [Desa]', 'identitas-desa', 'identitas_desa', 1, 'fa-id-card', 2, 2, 0, '', 200)
+            ,(18, $configId, '[Pemerintah Desa]', 'pemerintah-desa', 'pengurus', 1, 'fa-sitemap', 3, 2, 0, '', 200)
+            ,(20, $configId, 'Wilayah Administratif', 'wilayah-administratif', 'wilayah', 1, 'fa-map', 2, 2, 0, '', 200)
+            ,(21, $configId, 'Penduduk', 'penduduk', 'penduduk', 1, 'fa-user', 2, 2, 0, '', 2)
+            ,(22, $configId, 'Keluarga', 'keluarga', 'keluarga', 1, 'fa-users', 3, 2, 0, '', 2)
+            ,(23, $configId, 'Rumah Tangga', 'rumah-tangga', 'rtm', 1, 'fa-venus-mars', 4, 2, 0, '', 2)
+            ,(24, $configId, 'Kelompok', 'kelompok', 'kelompok/clear', 1, 'fa-sitemap', 5, 2, 0, '', 2)
+            ,(25, $configId, 'Data Suplemen', 'data-suplemen', 'suplemen', 1, 'fa-slideshare', 6, 2, 0, '', 2)
+            ,(26, $configId, 'Calon Pemilih', 'calon-pemilih', 'dpt', 1, 'fa-podcast', 7, 2, 0, '', 2)
+            ,(27, $configId, 'Statistik Kependudukan', 'statistik-kependudukan', 'statistik', 1, 'fa-bar-chart', 1, 2, 0, '', 3)
+            ,(28, $configId, 'Laporan Bulanan', 'laporan-bulanan', 'laporan/clear', 1, 'fa-file-text', 2, 2, 0, '', 3)
+            ,(29, $configId, 'Laporan Kelompok Rentan', 'laporan-kelompok-rentan', 'laporan_rentan/clear', 1, 'fa-wheelchair', 3, 2, 0, '', 3)
+            ,(30, $configId, 'Pengaturan Surat', 'pengaturan-surat', 'surat_master', 1, 'fa-cog', 1, 2, 0, '', 4)
+            ,(31, $configId, 'Cetak Surat', 'cetak-surat', 'surat', 1, 'fa-files-o', 2, 2, 0, '', 4)
+            ,(32, $configId, 'Arsip Layanan', 'arsip-layanan', 'keluar', 1, 'fa-folder-open', 4, 2, 0, '', 4)
+            ,(39, $configId, 'Kirim Pesan', 'kirim-pesan', 'sms', 1, 'fa-envelope-open-o', 1, 2, 0, '', 10)
+            ,(40, $configId, 'Daftar Kontak', 'daftar-kontak', 'daftar_kontak', 1, 'fa-id-card-o', 2, 2, 0, '', 10)
+            ,(42, $configId, 'Modul', 'modul', 'modul', 1, 'fa-tags', 1, 1, 0, '', 11)
+            ,(43, $configId, 'Aplikasi', 'aplikasi', 'setting', 1, 'fa-codepen', 2, 1, 0, '', 11)
+            ,(44, $configId, 'Pengguna', 'pengguna', 'man_user', 1, 'fa-users', 3, 1, 0, '', 11)
+            ,(45, $configId, 'Database', 'database', 'database', 1, 'fa-database', 4, 1, 0, '', 11)
+            ,(46, $configId, 'Info Sistem', 'info-sistem', 'info_sistem', 1, 'fa-server', 5, 1, 0, '', 11)
+            ,(47, $configId, 'Artikel', 'artikel', 'web', 1, 'fa-file-movie-o', 1, 4, 0, '', 13)
+            ,(48, $configId, 'Widget', 'widget', 'web_widget', 1, 'fa-windows', 2, 4, 0, '', 13)
+            ,(49, $configId, 'Menu', 'menu', 'menu', 1, 'fa-bars', 3, 4, 0, '', 13)
+            ,(50, $configId, 'Komentar', 'komentar', 'komentar', 1, 'fa-comments', 4, 4, 0, '', 13)
+            ,(51, $configId, 'Galeri', 'galeri', 'gallery', 1, 'fa-image', 5, 5, 0, '', 13)
+            ,(52, $configId, 'Informasi Publik', 'informasi-publik', 'dokumen', 1, 'fa-file-text', 4, 4, 0, '', 15)
+            ,(53, $configId, 'Media Sosial', 'media-sosial', 'sosmed', 1, 'fa-facebook', 7, 4, 0, '', 13)
+            ,(54, $configId, 'Slider', 'slider', 'web/slider', 1, 'fa-film', 8, 4, 0, '', 13)
+            ,(55, $configId, 'Kotak Pesan', 'kotak-pesan', 'mailbox', 1, 'fa-wechat', 1, 2, 0, '', 14)
+            ,(56, $configId, 'Pendaftar Layanan Mandiri', 'pendaftar-layanan-mandiri', 'mandiri', 1, 'fa-500px', 2, 2, 0, '', 14)
+            ,(57, $configId, 'Surat Masuk', 'surat-masuk', 'surat_masuk', 1, 'fa-sign-in', 1, 2, 2, '', 15)
+            ,(58, $configId, 'Surat Keluar', 'surat-keluar', 'surat_keluar', 1, 'fa-sign-out', 2, 2, 2, '', 15)
+            ,(61, $configId, 'Inventaris', 'inventaris', 'inventaris_tanah', 1, 'fa-cubes', 5, 2, 0, '', 15)
+            ,(62, $configId, 'Peta', 'peta', 'gis/clear', 1, 'fa-globe', 1, 2, 0, 'fa fa-globe', 9)
+            ,(63, $configId, 'Klasifikasi Surat', 'klasifikasi-surat', 'klasifikasi', 1, 'fa-code', 10, 2, 0, 'fa-code', 15)
+            ,(64, $configId, 'Teks Berjalan', 'teks-berjalan', 'teks_berjalan', 1, 'fa-ellipsis-h', 9, 2, 0, 'fa-ellipsis-h', 13)
+            ,(65, $configId, 'Kategori', 'kategori', 'kategori', 1, 'fa-list-alt', 2, 4, 0, '', 13)
+            ,(66, $configId, 'Peristiwa', 'peristiwa', 'penduduk_log', 1, 'fa-archive', 8, 2, 0, '', 2)
+            ,(67, $configId, 'Kategori / Variabel', 'analisis-kategori', 'analisis_kategori', 1, '', 0, 0, 2, '', 5)
+            ,(68, $configId, 'Indikator & Pertanyaan', 'analisis-indikator', 'analisis_indikator', 1, '', 0, 0, 2, '', 5)
+            ,(69, $configId, 'Klasifikasi Analisis', 'analisis-klasifikasi', 'analisis_klasifikasi', 1, '', 0, 0, 2, '', 5)
+            ,(70, $configId, 'Periode Sensus / Survei', 'analisis-periode', 'analisis_periode', 1, '', 0, 0, 2, '', 5)
+            ,(71, $configId, 'Input Data Sensus / Survei', 'analisis-respon', 'analisis_respon', 1, '', 0, 0, 2, '', 5)
+            ,(72, $configId, 'Laporan Hasil Klasifikasi', 'analisis-laporan', 'analisis_laporan', 1, '', 0, 0, 2, '', 5)
+            ,(73, $configId, 'Laporan Per Indikator', 'analisis-statistik-jawaban', 'analisis_statistik_jawaban', 1, '', 0, 0, 2, '', 5)
+            ,(75, $configId, 'api_inventaris_asset', 'api-inventaris-asset', 'api_inventaris_asset', 1, '', 16, 0, 2, '', 15)
+            ,(76, $configId, 'api_inventaris_gedung', 'api-inventaris-gedung', 'api_inventaris_gedung', 1, '', 17, 0, 2, '', 15)
+            ,(77, $configId, 'api_inventaris_gedung', 'api-inventaris-gedung-1', 'api_inventaris_gedung', 1, '', 18, 0, 2, '', 15)
+            ,(78, $configId, 'api_inventaris_jalan', 'api-inventaris-jalan', 'api_inventaris_jalan', 1, '', 19, 0, 2, '', 15)
+            ,(79, $configId, 'api_inventaris_konstruksi', 'api-inventaris-kontruksi', 'api_inventaris_kontruksi', 1, '', 20, 0, 2, '', 15)
+            ,(80, $configId, 'api_inventaris_peralatan', 'api-inventaris-peralatan', 'api_inventaris_peralatan', 1, '', 21, 0, 2, '', 15)
+            ,(81, $configId, 'api_inventaris_tanah', 'api-inventaris-tanah', 'api_inventaris_tanah', 1, '', 22, 0, 2, '', 15)
+            ,(82, $configId, 'inventaris_asset', 'inventaris-asset', 'inventaris_asset', 1, '', 11, 0, 2, '', 15)
+            ,(83, $configId, 'inventaris_gedung', 'inventaris-gedung', 'inventaris_gedung', 1, '', 12, 0, 2, '', 15)
+            ,(84, $configId, 'inventaris_jalan', 'inventaris-jalan', 'inventaris_jalan', 1, '', 13, 0, 2, '', 15)
+            ,(85, $configId, 'inventaris_kontruksi', 'inventaris-kontruksi', 'inventaris_kontruksi', 1, '', 14, 0, 2, '', 15)
+            ,(86, $configId, 'inventaris_peralatan', 'inventaris-peralatan', 'inventaris_peralatan', 1, '', 15, 0, 2, '', 15)
+            ,(87, $configId, 'laporan_inventaris', 'laporan-inventaris', 'laporan_inventaris', 1, '', 23, 0, 2, '', 15)
+            ,(88, $configId, 'plan', 'plan', 'plan', 1, '', 11, 0, 2, '', 9)
+            ,(89, $configId, 'point', 'point', 'point', 1, '', 12, 0, 2, '', 9)
+            ,(90, $configId, 'garis', 'garis', 'garis', 1, '', 13, 0, 2, '', 9)
+            ,(91, $configId, 'line', 'line', 'line', 1, '', 14, 0, 2, '', 9)
+            ,(92, $configId, 'area', 'area', 'area', 1, '', 15, 0, 2, '', 9)
+            ,(93, $configId, 'polygon', 'polygon', 'polygon', 1, '', 16, 0, 2, '', 9)
+            ,(94, $configId, 'Kategori Kelompok', 'kategori-kelompok', 'kelompok_master', 1, '', 7, 0, 2, '', 2)
+            ,(95, $configId, 'Produk Hukum', 'produk-hukum', 'dokumen_sekretariat/peraturan_desa', 1, 'fa-book', 3, 2, 2, '', 15)
+            ,(96, $configId, 'Informasi Publik', 'informasi-publik-1', 'informasi_publik', 1, '', 0, 0, 2, '', 52)
+            ,(97, $configId, 'Daftar Persyaratan', 'daftar-persyaratan', 'surat_mohon', 1, 'fa fa-book', 5, 2, 0, '', 4)
+            ,(98, $configId, 'Permohonan Surat', 'permohonan-surat', 'permohonan_surat_admin', 1, 'fa-files-o', 3, 0, 0, '', 4)
+            ,(101, $configId, 'Status [Desa]', 'status-desa', 'status_desa', 1, 'fa-dot-circle-o', 4, 0, 0, '', 200)
+            ,(102, $configId, 'Pengaturan Grup', 'pengaturan-grup', 'grup', 1, '', 7, 0, 2, '', 11)
+            ,(200, $configId, 'Info [Desa]', 'info-desa', '', 1, 'fa-dashboard', 20, 2, 1, 'fa fa-home', 0)
+            ,(201, $configId, 'Keuangan', 'keuangan', '', 1, 'fa-balance-scale', 80, 2, 0, 'fa-balance-scale', 0)
+            ,(203, $configId, 'Laporan', 'laporan', 'keuangan/laporan', 1, 'fa-bar-chart', 2, 2, 0, 'fa-bar-chart', 201)
+            ,(205, $configId, 'Pengunjung', 'pengunjung', 'pengunjung', 1, 'fa-bar-chart', 10, 4, 0, '', 13)
+            ,(206, $configId, 'Kesehatan', 'kesehatan', '', 1, 'fa-heartbeat', 41, 2, 0, 'fa fa-heartbeat', 0)
+            ,(207, $configId, 'Pendataan', 'pendataan', 'covid19', 1, 'fa-list', 1, 2, 0, 'fa fa-list', 206)
+            ,(208, $configId, 'Pemantauan', 'pemantauan', 'covid19/pantau', 1, 'fa-check', 2, 2, 0, 'fa fa-check', 206)
+            ,(209, $configId, 'Input Data', 'input-data', 'keuangan_manual', 1, 'fa-keyboard-o', 3, 2, 0, 'fa-keyboard-o', 201)
+            ,(211, $configId, 'Pengaturan', 'pengaturan-web', 'setting_web', 1, 'fa-gear', 11, 4, 0, 'fa-gear', 13)
+            ,(212, $configId, 'QR Code', 'qr-code', 'qr_code', 1, 'fa-qrcode', 6, 1, 0, 'fa-qrcode', 11)
+            ,(213, $configId, 'Daftar Persil', 'daftar-persil', 'data_persil', 1, 'fa-list', 0, 2, 0, '', 7)
+            ,(214, $configId, 'C-Desa', 'c-desa', 'cdesa', 1, 'fa-files-o', 0, 0, 0, '', 7)
+            ,(220, $configId, 'Pembangunan', 'pembangunan', 'admin_pembangunan', 1, 'fa-institution', 120, 2, 0, 'fa-institution', 0)
+            ,(301, $configId, 'Buku Administrasi [Desa]', 'buku-administrasi-desa', '', 1, 'fa-paste', 70, 2, 0, 'fa fa-paste', 0)
+            ,(302, $configId, 'Administrasi Umum', 'administrasi-umum', 'bumindes_umum', 1, 'fa-bookmark', 1, 2, 0, 'fa fa-bookmark', 301)
+            ,(303, $configId, 'Administrasi Penduduk', 'administrasi-penduduk', 'bumindes_penduduk_induk', 1, 'fa-users', 2, 2, 0, 'fa fa-users', 301)
+            ,(305, $configId, 'Administrasi Pembangunan', 'administrasi-pembangunan', 'bumindes_rencana_pembangunan', 1, 'fa-university', 4, 2, 0, 'fa fa-university', 301)
+            ,(310, $configId, 'Buku Eskpedisi', 'buku-eskpedisi', 'ekspedisi', 1, 'fa-files-o', 10, 0, 2, '', 301)
+            ,(311, $configId, 'Buku Lembaran Dan Berita [Desa]', 'buku-lembaran-dan-berita-desa', 'lembaran_desa', 1, 'fa-files-o', 11, 0, 2, '', 301)
+            ,(312, $configId, 'Anjungan', 'anjungan', '', 1, 'fa-desktop', 180, 2, 0, '', 0)
+            ,(313, $configId, 'Layanan Pelanggan', 'layanan-pelanggan', 'pelanggan', 1, 'fa-credit-card', 5, 0, 0, 'fa-credit-card', 200)
+            ,(314, $configId, 'Pengaturan', 'pengaturan-layanan-mandiri', 'setting_mandiri', 1, 'fa-gear', 6, 2, 0, 'fa-gear', 14)
+            ,(315, $configId, 'Buku Mutasi Penduduk', 'buku-mutasi-penduduk', 'bumindes_penduduk_mutasi', 1, 'fa-files-o', 15, 0, 2, '', 301)
+            ,(316, $configId, 'Buku Rekapitulasi Jumlah Penduduk', 'buku-rekapitulasi-jumlah-penduduk', 'bumindes_penduduk_rekapitulasi', 1, 'fa-files-o', 16, 0, 2, '', 301)
+            ,(317, $configId, 'Buku Penduduk Sementara', 'buku-penduduk-sementara', 'bumindes_penduduk_sementara', 1, 'fa-files-o', 17, 0, 2, '', 301)
+            ,(318, $configId, 'Buku KTP dan KK', 'buku-ktp-dan-kk', 'bumindes_penduduk_ktpkk', 1, 'fa-files-o', 18, 0, 2, '', 301)
+            ,(319, $configId, 'Buku Tanah Kas [Desa]', 'buku-tanah-kas-desa', 'bumindes_tanah_kas_desa', 1, 'fa-files-o', 12, 0, 2, '', 301)
+            ,(320, $configId, 'Buku Tanah di [Desa]', 'buku-tanah-di-desa', 'bumindes_tanah_desa', 1, 'fa-files-o', 13, 0, 2, '', 301)
+            ,(321, $configId, 'Pendapat', 'pendapat', 'pendapat', 1, 'fa-thumbs-o-up', 5, 0, 0, 'fa-thumbs-o-up', 14)
+            ,(322, $configId, 'Buku Inventaris dan Kekayaan [Desa]', 'buku-inventaris-dan-kekayaan-desa', 'bumindes_inventaris_kekayaan', 1, 'fa-files-o', 14, 0, 2, '', 301)
+            ,(323, $configId, 'Buku Rencana Kerja Pembangunan', 'buku-rencana-kerja-pembangunan', 'bumindes_rencana_pembangunan', 1, 'fa-files-o', 19, 0, 2, '', 301)
+            ,(324, $configId, 'Lapak', 'lapak', 'lapak_admin', 1, 'fa-cart-plus', 122, 2, 0, 'fa-cart-plus', 0)
+            ,(325, $configId, 'Laporan APBDes', 'laporan-apbdes', 'laporan_apbdes', 1, 'fa-file-text-o', 5, 2, 0, 'fa-file-text-o', 201)
+            ,(326, $configId, 'Sinkronisasi', 'sinkronisasi', 'sinkronisasi', 1, ' fa-random', 125, 2, 0, 'fa-random', 343)
+            ,(327, $configId, 'Lembaga [Desa]', 'lembaga-desa', 'lembaga/clear', 1, 'fa-list', 4, 2, 0, 'fa-list', 200)
+            ,(328, $configId, 'Kategori Lembaga', 'kategori-lembaga', 'lembaga_master', 1, '', 6, 2, 2, '', 200)
+            ,(329, $configId, 'Bumindes Kegiatan Pembangunan', 'bumindes-kegiatan-pembangunan', 'bumindes_kegiatan_pembangunan', 1, '', NULL, 2, 2, '', 301)
+            ,(330, $configId, 'Laporan penduduk', 'laporan-penduduk', 'laporan_penduduk', 1, 'fa-file-text-o', 5, 2, $configId, 'fa-file-text-o', 3)
+            ,(331, $configId, 'Pendaftaran Kerjasama', 'pendaftaran-kerjasama', 'pendaftaran_kerjasama', 1, 'fa-list', 6, 2, 0, 'fa-list', 200)
+            ,(332, $configId, 'Kader Pemberdayaan Masyarakat', 'bumindes-kader', 'bumindes_kader', 1, '', NULL, 2, 2, '', 301)
+            ,(333, $configId, 'Buku Inventaris Hasil - Hasil Pembangunan', 'bumindes-hasil-pembangunan', 'bumindes_hasil_pembangunan', 1, '', NULL, 2, 2, '', 301)
+            ,(334, $configId, 'Pengaduan', 'pengaduan', 'pengaduan_admin', 1, 'fa-info', 124, 2, 0, 'fa-info', 0)
+            ,(335, $configId, 'Vaksin', 'vaksin', 'vaksin_covid/clear', 1, 'fa fa-medkit', 2, 2, 0, '', 206)
+            ,(336, $configId, 'Arsip [Desa]', 'arsip-desa', 'bumindes_arsip', 1, 'fa-archive', 5, 2, 0, 'fa fa-archive', 301)
+            ,(337, $configId, 'Kehadiran', 'kehadiran', '', 1, 'fa-calendar-check-o', 41, 0, 0, 'fa-calendar-check-o', 0)
+            ,(339, $configId, 'Jam Kerja', 'jam-kerja', 'kehadiran_jam_kerja', 1, 'fa-clock-o', 2, 0, 0, 'fa-credit-card', 337)
+            ,(340, $configId, 'Hari Libur', 'hari-libur', 'kehadiran_hari_libur', 1, 'fa-calendar', 2, 0, 0, 'fa-credit-card', 337)
+            ,(341, $configId, 'Rekapitulasi', 'rekapitulasi', 'kehadiran_rekapitulasi', 1, 'fa-list', 2, 0, 0, 'fa-list', 337)
+            ,(342, $configId, 'Pengaduan', 'kehadiran-pengaduan', 'kehadiran_pengaduan', 1, 'fa-exclamation', 2, 0, 0, 'fa-exclamation', 337)
+            ,(343, $configId, 'OpenDK', 'opendk', '', 1, 'fa-university', 124, 2, 0, 'fa-university', 0)
+            ,(344, $configId, 'Pesan', 'pesan', 'opendk_pesan/clear', 1, 'fa-envelope', 124, 2, 0, 'fa-envelope', 343)
+            ,(345, $configId, 'Grup Kontak', 'grup-kontak', 'grup_kontak', 1, 'fa fa-list', 2, 2, 2, 'fa fa-list', 10)
+            ,(346, $configId, 'Stunting', 'stunting', 'stunting', 1, 'fa-stethoscope', 4, 0, 0, 'fa-stethoscope', 206)
+            ,(347, $configId, 'Daftar Anjungan', 'daftar-anjungan', 'anjungan', 1, 'fa-list', 1, 2, 0, 'fa-list', 312)
+            ,(348, $configId, 'Menu', 'anjungan-menu', 'anjungan_menu', 1, 'fa-bars', 2, 2, 0, 'fa-bars', 312)
+            ,(349, $configId, 'Pengaturan', 'pengaturan-anjungan', 'anjungan_pengaturan', 1, 'fa-gear', 3, 2, 0, 'fa-gear', 312)
+            ,(350, $configId, 'Alasan Keluar', 'alasan-keluar', 'kehadiran_keluar', 1, 'fa-sign-out', 5, 2, 0, 'fa-sign-out', 337)
+            ,(351, $configId, 'Gawai Layanan', 'gawai-layanan', 'gawai_layanan', 1, 'fa-desktop', 3, 2, 0, 'fa-desktop', 14)
+            ,(352, $configId, 'Satu Data', 'satu-data', '', 1, 'fa-globe', 180, 1, 0, 'fa-globe', 0)
+            ,(353, $configId, 'DTKS', 'dtks', 'dtks', 1, 'fa-exchange', 1, 2, 0, 'fa-exchange', 352)
+            ,(354, $configId, 'Buku Tamu', 'buku-tamu', '', 1, 'fa-book', 180, 2, 0, 'fa-book', 0)
+            ,(355, $configId, 'Data Tamu', 'data-tamu', 'buku_tamu', 1, 'fa-bookmark-o', 1, 2, 0, 'fa-bookmark-o', 354)
+            ,(356, $configId, 'Data Kepuasan', 'data-kepuasan', 'buku_kepuasan', 1, 'fa-smile-o', 2, 2, 0, 'fa-smile-o', 354)
+            ,(357, $configId, 'Data Pertanyaan', 'data-pertanyaan', 'buku_pertanyaan', 1, 'fa-question', 3, 2, 0, 'fa-question', 354)
+            ,(358, $configId, 'Data Keperluan', 'data-keperluan', 'buku_keperluan', 1, 'fa-send', 4, 2, 0, 'fa-send', 354)
+            ,(359, $configId, 'Optimasi Gambar', 'optimasi-gambar', 'optimasi_gambar', 1, 'fa-picture-o', 7, 2, 0, 'fa-picture-o', 11)";
+        DB::statement($sql);
+        log_message('error', 'Migrasi reset modul berhasil');
         return $hasil;
     }
 }

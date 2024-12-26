@@ -41,22 +41,7 @@ Route::get('/', 'Periksa@index');
 // Definisi Rute Default
 Route::group('periksa', static function (): void {
     Route::get('/', 'Periksa@index')->name('periksa.index');
-    Route::match(['GET', 'POST'], '/perbaiki', 'Periksa@perbaiki')->name('periksa.perbaiki');
-    Route::match(['GET', 'POST'], '/perbaiki_sebagian/{masalah?}', 'Periksa@perbaiki_sebagian')->name('periksa.perbaiki_sebagian');    
-    Route::get('autoincrement', 'Periksa@perbaiki_autoincrement')->name('periksa.perbaiki_autoincrement');
-    
-});
-Route::group('periksaKlasifikasiSurat', static function (): void {
-    Route::get('/hapus', 'PeriksaKlasifikasiSurat@hapus')->name('periksaKlasifikasiSurat.hapus');
-});
-Route::group('periksaLogKeluarga', static function (): void {
-    Route::get('/', 'PeriksaLogKeluarga@index')->name('periksaLogKeluarga.index');
-    Route::post('/hapusLog', 'PeriksaLogKeluarga@hapusLog')->name('periksaLogKeluarga.hapusLog');
-});
-Route::group('periksaLogPenduduk', static function (): void {
-    Route::get('/', 'PeriksaLogPenduduk@index')->name('periksaLogPenduduk.index');
-    Route::post('/hapusLog', 'PeriksaLogPenduduk@hapusLog')->name('periksaLogPenduduk.hapusLog');
-    Route::post('/updateStatusDasar', 'PeriksaLogPenduduk@updateStatusDasar')->name('periksaLogPenduduk.updateStatusDasar');
+    Route::post('migrasi_db_cri', 'Periksa@migrasi_db_cri')->name('periksa.migrasi_db_cri');            
 });
 // Koneksi database
 Route::get('koneksi-database', 'Koneksi_database@index');

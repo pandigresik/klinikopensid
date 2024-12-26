@@ -35,8 +35,6 @@
  *
  */
 
-use App\Models\BaseModel;
-use App\Models\Config;
 use App\Models\Migrasi;
 use Illuminate\Support\Facades\DB;
 
@@ -51,27 +49,34 @@ class Periksa extends CI_Controller
         parent::__construct();
 
         $this->load->database();
-
         if ($this->session->db_error['code'] === 1049) {
             redirect('koneksi-database');
         }
-
-        $this->header = Config::appKey()->first();
     }
 
     public function index()
-    {        
-        if ($this->session->message_query || $this->session->message_exception) {
-            log_message('error', $this->session->message_query);
-            log_message('error', $this->session->message_exception);
-        }        
-        $this->perbaiki_autoincrement();
-        $this->load->model('database_model');
-        Migrasi::truncate();
-        $this->database_model->migrasi_db_cri(true);
+    {
+        $data['form_action'] = site_url('periksa/migrasi_db_cri');
 
-        return view('periksa.index', array_merge([], ['header' => $this->header]));
-    }    
+        $data['act_tab'] = 2;
+        $data['content'] = 'admin.database.migrasi_cri';
+
+        view('admin.database.index', $data);
+    }
+
+    public function migrasi_db_cri(): void
+    {
+        session_error_clear();
+        set_time_limit(0);              // making maximum execution time unlimited
+        ob_implicit_flush(1);           // Send content immediately to the browser on every statement which produces output
+        ob_end_flush();
+        Migrasi::truncate();
+        $this->load->model('database_model');
+        $this->perbaiki_autoincrement();
+        echo json_encode(['message' => 'Ulangi migrasi database versi ' . VERSI_DATABASE, 'status' => 0]);
+        $this->database_model->setShowProgress(1)->migrasi_db_cri(true);
+        echo json_encode(['message' => 'Proses migrasi database telah berhasil', 'status' => 1]);
+    }
 
     public function perbaiki_autoincrement()
     {
@@ -81,6 +86,7 @@ class Periksa extends CI_Controller
         $exclude_table = [
             'analisis_respon',
             'analisis_respon_hasil',
+            'captcha_codes',
             'password_resets',
             'sentitems', // Belum tau bentuk datanya bagamana
             'sys_traffic',
@@ -93,24 +99,57 @@ class Periksa extends CI_Controller
             'id',
             'id_kontak',
             'id_aset',
+            'pamong_id',
         ];
 
         // Daftar tabel yang tidak memiliki Auto_Increment
-        $tables = DB::select("SELECT `TABLE_NAME` FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = '{$this->db->database}' AND AUTO_INCREMENT IS NULL");        
-        $this->db->simple_query('SET FOREIGN_KEY_CHECKS=0');
+        $tables = DB::select("SELECT `TABLE_NAME` FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = '{$this->db->database}' AND AUTO_INCREMENT IS NULL");
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+
         foreach ($tables as $tbl) {
-            $name = $tbl->TABLE_NAME;            
-            if (!in_array($name, $exclude_table) && in_array($key = $this->db->list_fields($name)[0], $only_pk)) {                
+            $name = $tbl->TABLE_NAME;
+            if (! in_array($name, $exclude_table) && in_array($key = $this->db->list_fields($name)[0], $only_pk)) {
                 try {
-                    $hasil = DB::statement("ALTER TABLE $name add primary key($key)");
-                    $hasil = DB::statement("ALTER TABLE $name MODIFY $key INT NOT NULL AUTO_INCREMENT");
-                } catch (\Exception $e) {
-                    log_message('error', "Auto_Increment pada tabel {$name} dengan kolom {$key} gagal ditambahkan.". $e->getMessage());
-                }                            
+                    $this->addAutoIncrement($name, $key);
+                    echo json_encode(['message' => 'Perbaikan auto increment pada tabel ' . $name, 'status' => 0]);
+                } catch (Exception $e) {
+                    log_message('error', "Auto_Increment pada tabel {$name} dengan kolom {$key} gagal ditambahkan." . $e->getMessage());
+                }
             }
-            $this->db->simple_query('SET FOREIGN_KEY_CHECKS=1');
         }
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         return $hasil;
+    }
+
+    private function addAutoIncrement(string $table, string $key)
+    {
+        // Query to get the table schema
+        $stmt   = DB::select("SHOW CREATE TABLE {$table}");
+        $result = (array) $stmt[0];
+
+        $hasPrimaryKey = false;
+        // Check for primary key and auto increment
+        if (preg_match('/PRIMARY KEY \(`(.+?)`\)/', $result['Create Table'], $matches)) {
+            $hasPrimaryKey = true;
+        }
+        if (! $hasPrimaryKey) {
+            $this->hapusIdKembar($table, $key);
+            DB::statement("ALTER TABLE {$table} add primary key({$key})");
+        }
+        DB::statement("ALTER TABLE {$table} MODIFY {$key} INT NOT NULL AUTO_INCREMENT");
+    }
+
+    private function hapusIdKembar(string $table, string $key)
+    {
+        $hasil = DB::select("select * from {$table} group by {$key} having count(*) > 1");
+        if (count($hasil) > 0) {
+            DB::statement("delete from {$table} where {$key} in (select {$key} from {$table} group by {$key} having count({$key}) > 1)");
+
+            foreach ($hasil as $key => $item) {
+                $tmpInsert = (array) $item;
+                DB::insert("insert into {$table} (" . implode(',', array_keys($tmpInsert)) . ") values ('" . implode("','", array_values($tmpInsert)) . "')");
+            }
+        }
     }
 }

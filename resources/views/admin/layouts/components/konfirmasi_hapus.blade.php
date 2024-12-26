@@ -7,12 +7,12 @@
                     <h4 class="modal-title" id="myModalLabel"><i class="fa fa-exclamation-triangle text-red"></i> Konfirmasi</h4>
                 </div>
                 <div class="modal-body btn-info">
-                    Apakah Anda yakin ingin menghapus data ini?
+                    {{ $pesan_hapus ?? 'Apakah Anda yakin ingin menghapus data ini?' }}
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-social btn-warning btn-sm" data-dismiss="modal"><i class="fa fa-sign-out"></i> Tutup</button>
                     <a class="btn-ok">
-                        <button type="submit" class="btn btn-social btn-danger btn-sm" id="ok-delete"><i class="fa fa-trash-o"></i> Hapus</button>
+                        <div class="btn btn-social btn-danger btn-sm" id="ok-delete"><i class="fa fa-trash-o"></i> Hapus</div>
                     </a>
                 </div>
             </div>

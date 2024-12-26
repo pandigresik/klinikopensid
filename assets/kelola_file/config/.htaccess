@@ -1,4 +1,1 @@
-<FilesMatch "\.(php)$">
-    order allow,deny
-    allow from all
-</FilesMatch>
+Deny from all

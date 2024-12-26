@@ -380,7 +380,7 @@ class Migrasi_2023110101 extends MY_model
     protected function suratKeteranganNikah($hasil, $id)
     {
         $data = getSuratBawaanTinyMCE('surat-keterangan-nikah')->first();
-
+        unset($data['format_nomor_global']);
         if ($data) {
             $this->tambah_surat_tinymce($data, $id);
         }

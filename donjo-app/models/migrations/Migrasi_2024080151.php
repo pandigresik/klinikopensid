@@ -158,7 +158,7 @@ class Migrasi_2024080151 extends MY_model
 
             // analisis_periode
             $hasil = $hasil && $this->tambahForeignKey('analisis_periode_master_fk', 'analisis_periode', 'id_master', 'analisis_master', 'id', true);
-            $hasil = $hasil && $this->tambahForeignKey('state_fk', 'analisis_periode', 'id_state', 'analisis_ref_state', 'id', true);
+            //$hasil = $hasil && $this->tambahForeignKey('state_fk', 'analisis_periode', 'id_state', 'analisis_ref_state', 'id', true);
 
             // analisis_respon
             $hasil = $hasil && $this->tambahForeignKey('analisis_respon_indikator_fk', 'analisis_respon', 'id_indikator', 'analisis_indikator', 'id', true);
@@ -212,7 +212,9 @@ class Migrasi_2024080151 extends MY_model
 
             // fcm_token_mandiri
             $hasil = $hasil && $this->tambahForeignKey('fcm_token_mandiri_config_fk', 'fcm_token_mandiri', 'config_id', 'config', 'id', true);
-            $hasil = $hasil && $this->tambahForeignKey('fcm_token_mandiri_user_mandiri_fk', 'fcm_token_mandiri', 'id_user_mandiri', 'tweb_penduduk_mandiri', 'id_pend');
+            // perbaiki dulu kolom id_pend pada tabel fcm_token_mandiri menjadi int(11)
+            DB::statement('alter table `tweb_penduduk_mandiri` modify column `id_pend` int(11)');
+            // $hasil = $hasil && $this->tambahForeignKey('fcm_token_mandiri_user_mandiri_fk', 'fcm_token_mandiri', 'id_user_mandiri', 'tweb_penduduk_mandiri', 'id_pend');
 
             // garis
             $hasil = $hasil && $this->tambahForeignKey('garis_cluster_fk', 'garis', 'id_cluster', 'tweb_wil_clusterdesa', 'id', true);

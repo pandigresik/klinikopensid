@@ -63,8 +63,8 @@ class Data_awal extends MY_Model
             // Pengaturan Aplikasi
             $hasil = $hasil && $this->tambah_pengaturan_aplikasi($hasil);
 
-            // Tambah Modul
-            $hasil = $hasil && $this->tambah_modul($hasil);
+            // Tambah Modul                        
+            // $hasil = $hasil && $this->tambah_modul($hasil);
 
             // Grup Pengguna
             $hasil = $hasil && $this->tambah_grup_pengguna($hasil);
@@ -499,7 +499,7 @@ class Data_awal extends MY_Model
             ],
             [
                 'grup'  => 'Operator',
-                'slug'  => 'klasfikasi-surat',
+                'slug'  => 'klasifikasi-surat',
                 'akses' => 3,
             ],
             [
@@ -1145,22 +1145,26 @@ class Data_awal extends MY_Model
         ];
 
         foreach ($data as $row) {
-            $hasil = $hasil && DB::table('grup_akses')->insert([
-                'config_id' => $this->config_id,
-                'id_grup'   => UserGrup::where('nama', $row['grup'])->first()->id,
-                'id_modul'  => Modul::when($row['slug'] == 'klasfikasi-surat', static function ($query) {
-                    // perubahan modul 'klasfikasi-surat' menjadi 'klasifikasi-surat'
-                    // membuat migrasi selanjutnya tidak berjalan, gunakan query
-                    // untuk mencari 'klasfikasi-surat' atau 'klasifikasi-surat'
-                    $query->where('slug', 'klasfikasi-surat')->orWhere('slug', 'klasifikasi-surat');
-                }, static function ($query) use ($row) {
-                    // default query
-                    $query->where('slug', $row['slug']);
-                })
-                    ->first()
-                    ->id,
-                'akses' => $row['akses'],
-            ]);
+            $idModul = Modul::when($row['slug'] == 'klasfikasi-surat', static function ($query) {
+                // perubahan modul 'klasfikasi-surat' menjadi 'klasifikasi-surat'
+                // membuat migrasi selanjutnya tidak berjalan, gunakan query
+                // untuk mencari 'klasfikasi-surat' atau 'klasifikasi-surat'
+                $query->where('slug', 'klasfikasi-surat')->orWhere('slug', 'klasifikasi-surat');
+            }, static function ($query) use ($row) {
+                // default query
+                $query->where('slug', $row['slug']);
+            })
+                ->first()
+                ->id;
+            if($idModul){
+                $hasil = $hasil && DB::table('grup_akses')->insert([
+                    'config_id' => $this->config_id,
+                    'id_grup'   => UserGrup::where('nama', $row['grup'])->first()->id,
+                    'id_modul'  => $idModul,
+                    'akses' => $row['akses'],
+                ]);
+            }    
+            
         }
 
         return $hasil && true;
@@ -18433,7 +18437,6 @@ class Data_awal extends MY_Model
         return $hasil && $this->data_awal('tweb_penduduk_umur', $data);
     }
 
-    // Tambah syarat surat pada tabel surat
     public function tambah_modul($hasil)
     {
         $data = [
@@ -19038,8 +19041,8 @@ class Data_awal extends MY_Model
                 'parent'     => '9',
             ],
             [
-                'modul'      => 'Klasfikasi Surat',
-                'slug'       => 'klasfikasi-surat',
+                'modul'      => 'Klasifikasi Surat',
+                'slug'       => 'klasifikasi-surat',
                 'url'        => 'klasifikasi/clear',
                 'aktif'      => 1,
                 'ikon'       => 'fa-code',
@@ -20308,7 +20311,7 @@ class Data_awal extends MY_Model
                 'hidden'     => '0',
                 'ikon_kecil' => 'fa-send',
                 'parent'     => '354',
-            ],            
+            ],
             [
                 'modul'      => 'Optimasi Gambar',
                 'slug'       => 'optimasi-gambar',
@@ -20354,6 +20357,7 @@ class Data_awal extends MY_Model
         ];
 
         foreach ($parent as $key => $value) {
+            DB::table('setting_modul')->where('slug', $value)->where('id', '!=', $key)->delete();
             DB::table('setting_modul')->where('id', $key)->update(['slug' => $value]);
 
             // Cari parent_id
@@ -20365,6 +20369,8 @@ class Data_awal extends MY_Model
 
         return $hasil;
     }
+    // Tambah syarat surat pada tabel surat
+
 
     protected function impor_data_awal_analisis($hasil)
     {

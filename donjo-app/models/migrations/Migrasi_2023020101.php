@@ -51,7 +51,7 @@ class Migrasi_2023020101 extends MY_model
         $hasil = $hasil && $this->migrasi_2023010452($hasil);
         $hasil = $hasil && $this->migrasi_2023012451($hasil);
         $hasil = $hasil && $this->migrasi_2023012571($hasil);
-        $hasil = $hasil && $this->migrasi_2023012751($hasil);
+        // $hasil = $hasil && $this->migrasi_2023012751($hasil);
         $hasil = $hasil && $this->migrasi_2023013051($hasil);
         $hasil = $hasil && $this->migrasi_2023013152($hasil);
 

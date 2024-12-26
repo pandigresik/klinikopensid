@@ -53,11 +53,10 @@ class Migrasi_2024110101 extends MY_Model
 {
     public function up()
     {
-        $hasil = true;
-
+        $hasil = true;        
         $hasil = $hasil && $this->migrasi_tabel($hasil);
-
-        return $hasil && $this->migrasi_data($hasil);
+        
+        return $hasil && $this->migrasi_data($hasil);        
     }
 
     protected function migrasi_tabel($hasil)
@@ -93,10 +92,10 @@ class Migrasi_2024110101 extends MY_Model
         $hasil = $hasil && $this->migrasi_2024031051($hasil);
         $hasil = $hasil && $this->migrasi_2024031251($hasil);
         $hasil = $hasil && $this->migrasi_2024031451($hasil);
-        $hasil = $hasil && $this->migrasi_2024031851($hasil);
+        $hasil = $hasil && $this->migrasi_2024031851($hasil);        
         $hasil = $hasil && $this->migrasi_2024032051($hasil);
-
-        return $hasil && $this->migrasi_2024031951($hasil);
+        $hasil = $hasil && $this->migrasi_2024031951($hasil);            
+        return $hasil;
     }
 
     protected function migrasi_2024030151($hasil, $id)
@@ -178,7 +177,8 @@ class Migrasi_2024110101 extends MY_Model
     protected function migrasi_2024031951($hasil)
     {
         // duplikasi foreign key
-        return $hasil && $this->hapus_foreign_key('suplemen', 'suplemen_terdata_suplemen_fk', 'suplemen_terdata');
+        $this->hapus_foreign_key('suplemen', 'suplemen_terdata_suplemen_fk', 'suplemen_terdata');
+        return $hasil;
     }
 
     protected function migrasi_2024080301($hasil, $config_id)
@@ -746,6 +746,7 @@ class Migrasi_2024110101 extends MY_Model
 
     protected function migrasi_2024032051($hasil)
     {
-        return $hasil && DB::table('setting_modul')->whereIn('slug', ['beranda', 'home'])->delete();
+        DB::table('setting_modul')->whereIn('slug', ['beranda', 'home'])->delete();
+        return $hasil;
     }
 }

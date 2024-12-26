@@ -74,7 +74,7 @@ class Migrasi_2023060101 extends MY_model
         }
 
         // Migrasi tanpa config_id
-        $hasil = $hasil && $this->migrasi_2023052451($hasil);
+        // $hasil = $hasil && $this->migrasi_2023052451($hasil);
         $hasil = $hasil && $this->migrasi_2023052453($hasil);
         $hasil = $hasil && $this->migrasi_2023052454($hasil);
         $hasil = $hasil && $this->migrasi_2023052551($hasil);

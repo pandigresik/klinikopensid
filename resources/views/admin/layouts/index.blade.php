@@ -52,9 +52,7 @@
                 @yield('content')
 
             </section>
-        </div>
-
-        @include('admin.pengaturan.pengaturan_modal')
+        </div>        
 
         @if ($notif['pengumuman'])
             @include('admin.layouts.components.pengumuman', $notif['pengumuman'])
@@ -83,14 +81,8 @@
     </script>
     <!-- jQuery 3 -->
     <script src="{{ asset('bootstrap/js/jquery.min.js') }}"></script>
-    @if (config_item('csrf_protection'))
-        <!-- CSRF Token -->
-        <script type="text/javascript">
-            var csrfParam = "{{ $token }}";
-            var getCsrfToken = () => document.cookie.match(new RegExp(csrfParam + '=(\\w+)'))[1];
-        </script>
-        <script src="{{ asset('js/anti-csrf.js') }}"></script>
-    @endif
+
+    @include('admin.layouts.components.token')
 
     <!-- Bootstrap 3.3.7 -->
     <script src="{{ asset('bootstrap/js/bootstrap.min.js') }}"></script>
@@ -133,37 +125,7 @@
                 });
             }
         });
-    </script>
-
-    @if (isset($perbaharui_langganan) && !config_item('demo_mode'))
-        <!-- cek status langganan -->
-        <script type="text/javascript">
-            var controller = '{{ $controller }}';
-            $.ajax({
-                    url: `<?= config_item('server_layanan') ?>/api/v1/pelanggan/pemesanan`,
-                    headers: {
-                        "Authorization": `Bearer {{ $setting->layanan_opendesa_token }}`,
-                        "X-Requested-With": `XMLHttpRequest`,
-                    },
-                    type: 'Post',
-                })
-                .done(function(response) {
-                    let data = {
-                        body: response
-                    }
-                    $.ajax({
-                        url: `${SITE_URL}pelanggan/pemesanan`,
-                        type: 'Post',
-                        dataType: 'json',
-                        data: data,
-                    }).done(function() {
-                        if (controller == 'pelanggan') {
-                            location.reload();
-                        }
-                    });
-                })
-        </script>
-    @endif
+    </script>   
 </body>
 
 </html>

@@ -1099,9 +1099,8 @@ class Migrasi_2024120121 extends MY_Model
                     'id_modul'  => $id_modul,
                     'akses'     => $row['akses'],
                 ];
-            }
-            
-            GrupAkses::upsert($dataInsert, ['id_grup'], ['id_modul']);
+                GrupAkses::upsert($dataInsert, ['id_grup'], ['id_modul']);
+            }                        
         }
 
         return $hasil;

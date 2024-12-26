@@ -502,6 +502,8 @@ class MY_Model extends CI_Model
         $config_id = $this->config_id;
 
         if ($this->db->table_exists($tabel) && $data !== []) {
+            // $uniqueColomn = $this->getUniqueColumnConstraint($tabel);
+            $uniqueColomn = [];
             collect($data)
                 ->chunk(100)
                 // tambahkan config_id terlebih dahulu
@@ -510,9 +512,18 @@ class MY_Model extends CI_Model
 
                     return $item;
                 }))
-                ->each(static function ($chunk) use ($tabel): void {
-                    // upsert agar tidak duplikat
-                    DB::table($tabel)->upsert($chunk->all(), 'config_id');
+                ->each(static function ($chunk) use ($tabel, $uniqueColomn): void {
+                    // upsert agar tidak duplikat                   
+                    if(empty($uniqueColomn)){
+                        $uniqueColomn = ['config_id'];
+                    }    
+                    try {
+                        DB::table($tabel)->upsert($chunk->all(), $uniqueColomn);
+                    } catch (\Exception $e) {
+                        log_message('error', 'uniqueColomn: '.$tabel . json_encode($uniqueColomn));
+                        log_message('error', 'data: '.$tabel . json_encode($chunk->all()));
+                        log_message('error', 'error: '.$tabel . $e->getMessage());
+                    }                    
                 });
             log_message('notice', 'Berhasil memperbarui data awal tabel ' . $tabel);
 
@@ -526,50 +537,61 @@ class MY_Model extends CI_Model
     // Buat FOREIGN KEY $nama_constraint $di_tbl untuk $fk menunjuk $ke_tbl di $ke_kolom
     public function tambahForeignKey($nama_constraint, $di_tbl, $fk, $ke_tbl, $ke_kolom, $ubahNull = false)
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS = 0');
-        DB::statement("alter table `{$ke_tbl}` modify column `{$ke_kolom}` int(11) NOT NULL AUTO_INCREMENT");
-        DB::statement("alter table `{$di_tbl}` modify column `{$fk}` int(11) NULL");
-
-        $query = $this->db
-            ->where('CONSTRAINT_SCHEMA', $this->db->database)
-            ->where('TABLE_NAME', $di_tbl)
-            ->where('CONSTRAINT_NAME', $nama_constraint)
-            ->where('REFERENCED_TABLE_NAME', $ke_tbl)
-            ->get('INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS');
-
         $hasil = true;
-
-        //pastikan engine yang dipakai innoDB
-        $q_check = "SHOW TABLE STATUS WHERE Name in('{$di_tbl}', '{$ke_tbl}') and ENGINE != 'InnoDB'";
-
-        $cek_engine = $this->db->query($q_check)->result();
-        if ($cek_engine) {
-            foreach ($cek_engine as $table) {
-                $q_set_engine = 'ALTER TABLE ' . $table->Name . ' ENGINE = InnoDB'; //query untuk ubah ke innoDB;
-                $this->db->query($q_set_engine);
-            }
+        $hasForeignKey = count(DB::select("
+            SELECT *
+            FROM `INFORMATION_SCHEMA`.`REFERENTIAL_CONSTRAINTS`
+            WHERE `CONSTRAINT_SCHEMA` = '{$this->db->database}'
+            AND `TABLE_NAME` = '{$di_tbl}'
+            AND `CONSTRAINT_NAME` = '{$nama_constraint}'
+            AND `REFERENCED_TABLE_NAME` = '{$ke_tbl}'")) > 0 ? true : false;
+        if($hasForeignKey){
+            return $hasil;
         }
+        try {            
+            //pastikan engine yang dipakai innoDB
+            $q_check = "SHOW TABLE STATUS WHERE Name in('{$di_tbl}', '{$ke_tbl}') and ENGINE != 'InnoDB'";
 
-        if ($query->num_rows() == 0) {
-            // sebelum ditambahkan pastikan tidak ada data asing pada kolom yang dijadikan foreign key
-            $dataAsing = $this->db->query("SELECT * FROM `{$di_tbl}` WHERE `{$fk}` is not null and `{$fk}` NOT IN (SELECT `{$ke_kolom}` FROM `{$ke_tbl}`)")->num_rows();
-            if ($dataAsing <= 0) {
-                return $hasil && $this->dbforge->add_column($di_tbl, [
-                    "CONSTRAINT `{$nama_constraint}` FOREIGN KEY (`{$fk}`) REFERENCES `{$ke_tbl}` (`{$ke_kolom}`) ON DELETE CASCADE ON UPDATE CASCADE",
-                ]);
+            $cek_engine = $this->db->query($q_check)->result();
+            if ($cek_engine) {
+                foreach ($cek_engine as $table) {
+                    $q_set_engine = 'ALTER TABLE ' . $table->Name . ' ENGINE = InnoDB'; //query untuk ubah ke innoDB;
+                    $this->db->query($q_set_engine);
+                }
             }
-            if ($ubahNull) {
-                // update menjadi null foreign key asing
-                DB::table($di_tbl)->whereNotIn($fk, DB::table($ke_tbl)->pluck($ke_kolom))->orWhere($fk, 0)->update([$fk => null]);
 
-                return $hasil && $this->dbforge->add_column($di_tbl, ["CONSTRAINT `{$nama_constraint}` FOREIGN KEY (`{$fk}`) REFERENCES `{$ke_tbl}` (`{$ke_kolom}`) ON DELETE CASCADE ON UPDATE CASCADE"]);
-            }
-            log_message('notice', 'Ada data pada kolom ' . $fk . ' tabel ' . $di_tbl . ' yang tidak ditemukan di tabel ' . $ke_tbl . ' kolom ' . $ke_kolom);
-            log_message('notice', 'cek dengan query "' . $this->db->last_query() . '"');
-        }
+            
+                // table yang tidak perlu diubah auto increment
+                $excludeTableAutoIncrement = ['tweb_penduduk_mandiri'];
+                DB::statement('SET FOREIGN_KEY_CHECKS = 0');
+                if(!in_array($ke_tbl, $excludeTableAutoIncrement)){                
+                    DB::statement("alter table `{$ke_tbl}` modify column `{$ke_kolom}` int(11) NOT NULL AUTO_INCREMENT");
+                }        
+                DB::statement("alter table `{$di_tbl}` modify column `{$fk}` int(11) NULL");
 
-        DB::statement('SET FOREIGN_KEY_CHECKS = 1');
+                // sebelum ditambahkan pastikan tidak ada data asing pada kolom yang dijadikan foreign key
+                $dataAsing = $this->db->query("SELECT * FROM `{$di_tbl}` WHERE `{$fk}` is not null and `{$fk}` NOT IN (SELECT `{$ke_kolom}` FROM `{$ke_tbl}`)")->num_rows();
+                if ($dataAsing <= 0) {
+                    DB::statement("ALTER TABLE `{$di_tbl}` ADD CONSTRAINT `{$nama_constraint}` FOREIGN KEY (`{$fk}`) REFERENCES `{$ke_tbl}` (`{$ke_kolom}`) ON DELETE CASCADE ON UPDATE CASCADE");                    
+                }else {
+                    log_message('notice', 'Ada data pada kolom ' . $fk . ' tabel ' . $di_tbl . ' yang tidak ditemukan di tabel ' . $ke_tbl . ' kolom ' . $ke_kolom);
+                    log_message('notice', 'cek dengan query "' . $this->db->last_query() . '"');            
+                }
+                if ($ubahNull) {
+                    // update menjadi null foreign key asing
+                    DB::table($di_tbl)->whereNotIn($fk, DB::table($ke_tbl)->pluck($ke_kolom))->orWhere($fk, 0)->update([$fk => null]);
+                    DB::statement("ALTER TABLE `{$di_tbl}` ADD CONSTRAINT `{$nama_constraint}` FOREIGN KEY (`{$fk}`) REFERENCES `{$ke_tbl}` (`{$ke_kolom}`) ON DELETE CASCADE ON UPDATE CASCADE");
+                }                
 
+            DB::statement('SET FOREIGN_KEY_CHECKS = 1');
+            return $hasil;
+        } catch (\Exception $e) {
+            log_message('error', $e->getMessage());
+            return $hasil;
+        }finally{
+            log_message('notice', 'Perintah menambahkan foreign key ' . $nama_constraint . ' pada tabel '.$di_tbl.' kolom '.$fk.' yang menunjuk ke tabel '.$ke_tbl.' kolom '.$ke_kolom);
+            return $hasil;
+        }        
         return $hasil;
     }
 
@@ -622,5 +644,27 @@ class MY_Model extends CI_Model
             {$columnString}
         ";
         return DB::statement($query);
+    }
+
+    private function getUniqueColumnConstraint(string $tableName){        
+        $uniqueColomn = [];
+        $stmt = DB::select("SHOW CREATE TABLE $tableName");
+        $result = (array) $stmt[0];
+        // Output the CREATE TABLE statement
+        $createTableStatement = $result['Create Table'];
+        echo "CREATE TABLE statement for '$tableName':\n";
+        echo $createTableStatement . "\n";
+
+        // Extract unique constraints
+        preg_match_all('/UNIQUE KEY `([^`]+)` \(`([^`]+(?:`, `[^`]+)*)`\)/', $createTableStatement, $matches);
+
+        // Output unique constraints
+        
+        foreach ($matches[1] as $index => $constraintName) {
+            $columns = $matches[2][$index];
+            $uniqueColomn[] = $columns;
+        }
+
+        return $uniqueColomn;
     }
 }
