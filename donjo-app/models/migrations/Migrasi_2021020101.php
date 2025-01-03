@@ -35,6 +35,8 @@
  *
  */
 
+use Illuminate\Support\Facades\DB;
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class Migrasi_2021020101 extends MY_model
@@ -494,16 +496,21 @@ class Migrasi_2021020101 extends MY_model
             ->where('id_pend IN (select id from tweb_penduduk where status_dasar = 4)')
             ->delete('log_penduduk');
 
+        try {
+            $hasil = $hasil && DB::statement(
+                '
+                INSERT INTO log_penduduk (id_pend, tgl_lapor, tgl_peristiwa, created_at, kode_peristiwa)
+                SELECT p.id, p.created_at, p.created_at, p.created_at,
+                (CASE when YEAR(p.tanggallahir) = YEAR(p.created_at) AND MONTH(p.tanggallahir) = MONTH(p.created_at) then 1 else 5 end)
+                FROM tweb_penduduk p
+                LEFT JOIN log_penduduk l on l.id_pend = p.id and l.kode_peristiwa in (1,5)
+                WHERE l.tgl_lapor IS NULL'
+            );
+        } catch (\Exception $e) {
+            log_message('error', 'Error saat migrasi 2021020101: ' . $e->getMessage());
+        }
         // Menambahkan data yang sudah ada ke tabel log_penduduk kalau belum ada
-        $hasil = $hasil && $this->db->query(
-            '
-            INSERT INTO log_penduduk (id_pend, tgl_lapor, tgl_peristiwa, created_at, kode_peristiwa)
-            SELECT p.id, p.created_at, p.created_at, p.created_at,
-            (CASE when YEAR(p.tanggallahir) = YEAR(p.created_at) AND MONTH(p.tanggallahir) = MONTH(p.created_at) then 1 else 5 end)
-            FROM tweb_penduduk p
-            LEFT JOIN log_penduduk l on l.id_pend = p.id and l.kode_peristiwa in (1,5)
-            WHERE l.tgl_lapor IS NULL'
-        );
+        
 
         // Hapus log tertua untuk duplikat (id_pend, kode_peristiwa).
         // Misalnya hapus kalau ada dua entri 'mati' untuk penduduk yg sama.

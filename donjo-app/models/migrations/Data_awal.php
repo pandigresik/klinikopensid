@@ -38,6 +38,7 @@
 use App\Enums\StatusEnum;
 use App\Libraries\TinyMCE;
 use App\Models\Config;
+use App\Models\GrupAkses;
 use App\Models\Modul;
 use App\Models\RefJabatan;
 use App\Models\SettingAplikasi;
@@ -1157,12 +1158,13 @@ class Data_awal extends MY_Model
                 ->first()
                 ->id;
             if($idModul){
-                $hasil = $hasil && DB::table('grup_akses')->insert([
+                GrupAkses::upsert([
                     'config_id' => $this->config_id,
                     'id_grup'   => UserGrup::where('nama', $row['grup'])->first()->id,
                     'id_modul'  => $idModul,
                     'akses' => $row['akses'],
-                ]);
+                ], ['config_id','id_grup','id_modul']);
+                // $hasil = $hasil && DB::table('grup_akses')->insert();
             }    
             
         }

@@ -259,11 +259,19 @@ class MY_Model extends CI_Model
             'id_modul' => $id_modul,
             'akses'    => $akses,
         ];
+        $cek = [
+            'id_grup'  => $id_grup,
+            'id_modul' => $id_modul,            
+        ];
 
         if ($this->db->field_exists('config_id', 'grup_akses')) {
             $insert['config_id'] = $config_id ?? $this->config_id;
+            $cek['config_id'] = $config_id ?? $this->config_id;
         }
-
+        $sudahAda = $this->db->get_where('grup_akses', $cek)->num_rows() > 0;
+        if($sudahAda){
+            return $this->db->where($cek)->update('grup_akses', $insert);
+        }
         return $this->db->insert('grup_akses', $insert);
     }
 

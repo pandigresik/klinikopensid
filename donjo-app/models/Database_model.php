@@ -225,6 +225,7 @@ class Database_model extends MY_Model
     public function jalankan_migrasi($migrasi)
     {
         $this->load->model('migrations/' . $migrasi);
+        log_message('notice', 'Jalankan ' . $migrasi);
         if ($this->{$migrasi}->up()) {
             log_message('notice', 'Berhasil Jalankan ' . $migrasi);
 

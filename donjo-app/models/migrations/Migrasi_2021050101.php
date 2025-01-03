@@ -35,6 +35,8 @@
  *
  */
 
+use Illuminate\Support\Facades\Schema;
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class Migrasi_2021050101 extends MY_model
@@ -565,6 +567,9 @@ class Migrasi_2021050101 extends MY_model
 
     private function akses_grup_bawaan($hasil)
     {
+        if(Schema::hasColumn('grup_akses', 'config_id')){
+            return $hasil;
+        }
         // Simpan grup akses yang ada sebelumnya kecuali grup_akses bawaan
         $grup = $this->db->where_not_in('id_grup', [2, 3, 4])->get('grup_akses')->result_array();
         array_walk($grup, static function (&$key) {
