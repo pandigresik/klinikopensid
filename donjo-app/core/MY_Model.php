@@ -165,9 +165,14 @@ class MY_Model extends CI_Model
                 session_error('--> Silahkan Cek <a href="' . site_url('info_sistem') . '">Info Sistem > Log</a>.');
                 log_message('error', "Data kolom {$kolom} pada tabel {$tabel} ada yang duplikat dan perlu diperbaiki sebelum migrasi dilanjutkan.");
                 log_message('notice', 'coba hapus otomatis');
-                if($this->hapusDataKembar($tabel, 'id', array_map(function($item){ return trim($item);} , explode(',',$kolom)))){
-                    log_message('error', "Data kolom {$kolom} pada tabel {$tabel} berhasil diperbaiki");
-                };
+                try {
+                    if($this->hapusDataKembar($tabel, 'id', array_map(function($item){ return trim($item);} , explode(',',$kolom)))){
+                        log_message('error', "Data kolom {$kolom} pada tabel {$tabel} berhasil diperbaiki");
+                    };
+                } catch (\Exception $e) {
+                    log_message('error', "gagal perbaiki data duplikat pada kolom {$kolom} tabel {$tabel} : ".$e->getMessage());
+                }
+                
             }
         }
 

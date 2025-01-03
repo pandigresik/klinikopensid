@@ -1183,12 +1183,17 @@ function unique_slug($tabel = null, $judul = null, $id = null, $field = 'slug', 
         $cek_slug  = true;
         $n         = 1;
         $slug_unik = $slug;
-
+        $hasConfigId = $CI->db->field_exists('config_id', $tabel);
         while ($cek_slug) {
             if ($id) {
                 $CI->db->where('id !=', $id);
             }
-            $cek_slug = $CI->db->where('config_id', $config ?? identitas('id'))->get_where($tabel, [$field => $slug_unik])->num_rows();
+            if ($hasConfigId) {
+                $cek_slug = $CI->db->where('config_id', $config ?? identitas('id'))->get_where($tabel, [$field => $slug_unik])->num_rows();
+            }else {
+                $cek_slug = $CI->db->get_where($tabel, [$field => $slug_unik])->num_rows();
+            }
+            
             if ($cek_slug) {
                 $slug_unik = $slug . '-' . $n++;
             }

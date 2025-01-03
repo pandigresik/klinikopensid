@@ -261,7 +261,7 @@ class Migrasi_2023110101 extends MY_model
         $query = $this->db->where('form_isian is NOT NULL')->get('tweb_surat_format');
 
         foreach ($query->result() as $row) {
-            $data = json_decode($row->form_isian, true);
+            $data = json_decode($row->form_isian, true) ?? [];
             if (array_key_exists('data', $data)) {
                 $data_value = $data['data'];
                 unset($data['data']);

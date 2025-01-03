@@ -101,9 +101,8 @@ class Migrasi_2020110101 extends MY_model
 			)";
             $hasil = $hasil && $this->db->query($query);
         }
-        // Update view supaya kolom baru ikut masuk
-        $hasil = $hasil && $this->db->query('DROP VIEW penduduk_hidup');
-        $hasil = $hasil && $this->db->query('CREATE VIEW penduduk_hidup AS SELECT * FROM tweb_penduduk WHERE status_dasar = 1');
+        // Update view supaya kolom baru ikut masuk        
+        $hasil = $hasil && $this->db->query('CREATE OR REPLACE VIEW penduduk_hidup AS SELECT * FROM tweb_penduduk WHERE status_dasar = 1');
 
         // komentar.email boleh null
         $field = [
