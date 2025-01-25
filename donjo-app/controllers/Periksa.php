@@ -142,7 +142,7 @@ class Periksa extends CI_Controller
 
     private function hapusIdKembar(string $table, string $key)
     {
-        $hasil = DB::select("select * from {$table} group by {$key} having count(*) > 1");
+        $hasil = DB::select("select {$key} from {$table} group by {$key} having count(*) > 1");
         if (count($hasil) > 0) {
             DB::statement("delete from {$table} where {$key} in (select {$key} from {$table} group by {$key} having count({$key}) > 1)");
 
