@@ -120,6 +120,7 @@ class Migrasi_2023070101 extends MY_model
         ";
         $checkConstraint = DB::select($query, [$db])[0];
         if ($checkConstraint->ConstraintSudahAda <= 0) {
+            DB::statement('alter table log_penduduk modify id_pend int(11) NOT NULL');
             DB::statement('alter table log_penduduk add CONSTRAINT fk_tweb_penduduk foreign key (id_pend) REFERENCES tweb_penduduk(id) ON UPDATE CASCADE ON DELETE CASCADE');
         }
 
@@ -2780,5 +2781,5 @@ class Migrasi_2023070101 extends MY_model
         }
 
         return $hasil;
-    }
+    }    
 }

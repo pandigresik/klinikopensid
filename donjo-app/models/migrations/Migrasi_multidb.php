@@ -1079,6 +1079,7 @@ class Migrasi_multidb extends MY_model
     // OpenKAB - Analisis Periode
     protected function analisis_parameter($hasil)
     {
+        DB::statement('ALTER TABLE analisis_parameter MODIFY COLUMN kode_jawaban INT(3) DEFAULT NULL');
         return $hasil && $this->tambah_config_id('analisis_parameter');
     }
 

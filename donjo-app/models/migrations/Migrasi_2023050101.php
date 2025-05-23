@@ -49,6 +49,7 @@ class Migrasi_2023050101 extends MY_model
         $hasil = $hasil && $this->suratPermohonanCerai($hasil);
         $hasil = $hasil && $this->migrasi_2023041251($hasil);
         $hasil = $hasil && $this->migrasi_2023041951($hasil);
+        $hasil = $hasil && $this->migrasi_2022062872($hasil);
         $hasil = $hasil && $this->jalankan_migrasi('migrasi_multidb');
 
         return $hasil && true;
@@ -367,6 +368,29 @@ class Migrasi_2023050101 extends MY_model
                     ]);
             }
         }
+
+        return $hasil;
+    }
+
+    protected function migrasi_2022062872($hasil)
+    {
+        $db    = $this->db->database;
+        $query = "
+            SELECT TABLE_NAME
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE COLUMN_NAME = 'updated_at'
+            AND TABLE_SCHEMA = ?;
+        ";
+        $tables = DB::select($query, [$db]);
+        if($tables){
+            foreach ($tables as $table) {
+                try {
+                    DB::statement('ALTER TABLE ' . $table->TABLE_NAME . ' modify COLUMN updated_at timestamp NULL DEFAULT current_timestamp');
+                } catch (\Exception $e) {
+                    log_message('error', 'Gagal mengubah kolom updated_at pada tabel ' . $table->TABLE_NAME . ': ' . $e->getMessage());
+                }                
+            }
+        }            
 
         return $hasil;
     }
